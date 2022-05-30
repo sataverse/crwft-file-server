@@ -1,5 +1,6 @@
 package crwft.crwftserver.controller;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,9 +12,13 @@ import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@Controller
 public class FileServerController {
-    private String sourceDir = "/Users/aneunne7/Desktop/basic/";
-    private String compileDir = "/Users/aneunne7/Desktop/files/";
+
+    //private String sourceDir = "/Users/aneunne7/Desktop/basic/";
+    //private String compileDir = "/Users/aneunne7/Desktop/files/";
+    private String sourceDir = "/root/api/basic/";
+    private String compileDir = "/root/api/users/";
     private String []basicFiles = {".gitignore", "package.json", "rollup.config.js",
             "src/main.js", "src/App.svelte", "public/index.html", "public/global.css"};
     private String []compiledFiles = {"index.html", "global.css", "build/bundle.css",
@@ -213,14 +218,17 @@ public class FileServerController {
         //컴파일
         try{
             String batch = "#!/bin/bash\ncd "+projectDirPath+"\nnpm i\nnpm i svelte-spa-router\nnpm run build";
-            File f = new File("/Users/aneunne7/Desktop/command");
+            File f = new File("/root/api/command.sh");
+            //File f = new File("/Users/aneunne7/Desktop/command");
             FileWriter fw = new FileWriter(f);
             BufferedWriter writer = new BufferedWriter(fw);
             writer.write(batch);
             writer.close();
 
-            shellCommand("chmod +x /Users/aneunne7/Desktop/command");
-            shellCommand("/Users/aneunne7/Desktop/command");
+            shellCommand("chmod +x /root/api/command.sh");
+            shellCommand("/root/api/command.sh");
+            //shellCommand("chmod +x /Users/aneunne7/Desktop/command");
+            //shellCommand("/Users/aneunne7/Desktop/command");
 
             f.delete();
         } catch (Exception e){

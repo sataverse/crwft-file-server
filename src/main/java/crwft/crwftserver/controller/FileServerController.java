@@ -23,6 +23,8 @@ public class FileServerController {
             "src/main.js", "src/App.svelte", "public/index.html", "public/global.css"};
     private String []compiledFiles = {"index.html", "global.css", "build/bundle.css",
             "build/bundle.js", "build/bundle.js.map"};
+    private String abundantCompileError = "<!DOCTYPE HTML><html><head><title>Error!!</title></head>" +
+            "<body><h3>The Server is already compiling your project, Please wait a moment</h3></body></html>";
 
     public void shellCommand(String cmd) throws IOException {
         Runtime runtime = Runtime.getRuntime();
@@ -52,8 +54,8 @@ public class FileServerController {
 
     @PostMapping("downloadSvelte")
     public void downloadSvelte(@RequestParam String userName,
-                               @RequestParam String projectName,
-                               HttpServletResponse res) throws IOException{
+                                 @RequestParam String projectName,
+                                 HttpServletResponse res) throws IOException{
 
         System.out.println(userName+"("+projectName+") : Will Download Svelte File");
         String outputDir = compileDir+userName+"/"+projectName+"/download/";
@@ -61,7 +63,7 @@ public class FileServerController {
         try{
             byte[] buf = new byte[1024];
             res.setContentType("application/octet-stream");
-            res.setHeader("Content-Disposition", "attachment;fileName=test.zip");
+            res.setHeader("Content-Disposition", "attachment;fileName=source.zip");
 
             FileInputStream fis = new FileInputStream(outputDir+"source.zip");
             BufferedInputStream bis = new BufferedInputStream(fis);
@@ -86,8 +88,8 @@ public class FileServerController {
 
     @PostMapping("downloadCompiled")
     public void downloadCompiled(@RequestParam String userName,
-                                 @RequestParam String projectName,
-                                 HttpServletResponse res) throws IOException{
+                                   @RequestParam String projectName,
+                                   HttpServletResponse res) throws IOException{
 
         System.out.println(userName+"("+projectName+") : Will Download Compiled File");
         String outputDir = compileDir+userName+"/"+projectName+"/download/";
@@ -95,7 +97,7 @@ public class FileServerController {
         try{
             byte[] buf = new byte[1024];
             res.setContentType("application/octet-stream");
-            res.setHeader("Content-Disposition", "attachment;fileName=test.zip");
+            res.setHeader("Content-Disposition", "attachment;fileName=compile.zip");
 
             FileInputStream fis = new FileInputStream(outputDir+"compile.zip");
             BufferedInputStream bis = new BufferedInputStream(fis);
@@ -156,6 +158,35 @@ public class FileServerController {
             File userDir = new File(userDirPath);
             if(!userDir.exists()) {
                 userDir.mkdir();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        try {
+            File f = new File(userDirPath+"/status.txt");
+            if(!f.exists()){
+                f.createNewFile();
+                FileWriter fw = new FileWriter(f);
+                BufferedWriter writer = new BufferedWriter(fw);
+                writer.write("Compile");
+                writer.close();
+            } else {
+                FileReader fr = new FileReader(f);
+                BufferedReader reader = new BufferedReader(fr);
+                if(reader.readLine().equals("Compile")) {
+                    reader.close();
+                    res.setContentType("text/html");
+                    res.setCharacterEncoding("utf-8");
+                    res.getWriter().print(abundantCompileError);
+                    return;
+                } else {
+                    reader.close();
+                    FileWriter fw = new FileWriter(f);
+                    BufferedWriter writer = new BufferedWriter(fw);
+                    writer.write("Compile");
+                    writer.close();
+                }
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -268,6 +299,7 @@ public class FileServerController {
             reader.close();
 
             output = indexHtml;
+            output = output.replace("Demo Page", projectName);
             output = output.replace("AA", globalCSS);
             output = output.replace("BB", bundleCss);
             output = output.replace("CC", bundleJS);
@@ -352,6 +384,16 @@ public class FileServerController {
             if(zipout2 != null){
                 zipout2 = null;
             }
+        }
+
+        try {
+            File f = new File(userDirPath+"/status.txt");
+            FileWriter fw = new FileWriter(f);
+            BufferedWriter writer = new BufferedWriter(fw);
+            writer.write("Idle");
+            writer.close();
+        }catch(Exception e){
+            e.printStackTrace();
         }
 
         if(todo.equals("downloadSvelte")){
